@@ -38,7 +38,7 @@ The following comparison are concluded according to hands-on practical experienc
 | ---------------------------- | --------------- | --------- | ----------- | --------- | ------------ | --------- | --------- | ------------- |
 | **Less Preparation** | ✅           | ❌    | ✅  | ✅ | ✅        | ✅ | ✅     | ✅    |
 | **Handles Dynamic Models** | ✅     | ❌ | ⚠️   | ❌ | ⚠️       | ✅ | ✅ | ❌          |
-| **Interactive Graphs**       | 🚧 Coming soon | ✅   | ✅  | ❌    | ❌         | ❌ | ❌    | ✅         |
+| **Interactive Graphs**       | ✅ | ✅   | ✅  | ❌    | ❌         | ❌ | ❌    | ✅         |
 | **Tensor Shapes** | ✅           | ✅     | ❌       | ✅     | ✅        | ✅     | ✅     | ✅         |
 | **Structure Completeness** | ✅           | ✅ | ✅ | ❌ based on autograd | ⚠️ some functions are missing | ⚠️    | ✅ | ❌ based on autograd |
 | **Compatibility**          | ✅           | ⚠️ unfriendly to some ops      | ⚠️ limited | ✅ | ❌ No         | ✅         | ✅     | ✅         |

@@ -1,0 +1,591 @@
+<!doctype html>
+<html lang="en" data-bs-theme="auto">
+  <head><script src="/static/js/color-modes.js"></script>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <title>aNET</title>
+
+    <link rel="stylesheet" href="/static/css/docsearch.css">
+
+<link href="/static/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+      .bd-placeholder-img {
+        font-size: 1.125rem;
+        text-anchor: middle;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        user-select: none;
+      }
+
+      @media (min-width: 768px) {
+        .bd-placeholder-img-lg {
+          font-size: 3.5rem;
+        }
+      }
+
+      .bi {
+        vertical-align: -.125em;
+        fill: currentColor;
+      }
+
+      .nav-scroller {
+        position: relative;
+        z-index: 2;
+        height: 2.75rem;
+        overflow-y: hidden;
+      }
+
+      .nav-scroller .nav {
+        display: flex;
+        flex-wrap: nowrap;
+        padding-bottom: 1rem;
+        margin-top: -1px;
+        overflow-x: auto;
+        text-align: center;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .btn-bd-primary {
+        --bd-violet-bg: #712cf9;
+        --bd-violet-rgb: 112.520718, 44.062154, 249.437846;
+
+        --bs-btn-font-weight: 600;
+        --bs-btn-color: var(--bs-white);
+        --bs-btn-bg: var(--bd-violet-bg);
+        --bs-btn-border-color: var(--bd-violet-bg);
+        --bs-btn-hover-color: var(--bs-white);
+        --bs-btn-hover-bg: #6528e0;
+        --bs-btn-hover-border-color: #6528e0;
+        --bs-btn-focus-shadow-rgb: var(--bd-violet-rgb);
+        --bs-btn-active-color: var(--bs-btn-hover-color);
+        --bs-btn-active-bg: #5a23c8;
+        --bs-btn-active-border-color: #5a23c8;
+      }
+
+      .bd-mode-toggle {
+        z-index: 1500;
+      }
+
+      .bd-mode-toggle .dropdown-menu .active .bi {
+        display: block !important;
+      }
+
+      /* Main content */
+      #graph-container {
+        flex-grow: 1;
+        display: block;
+        background-color: white;
+        box-shadow: 0 0px 0px rgba(0, 0, 0, 0.1);
+        padding: 20px; /* Reduced padding for more space */
+        border-radius: 8px;
+        width: calc(100% - 180px); /* Full width minus margins */
+        height: calc(100vh - 200px); /* Fit viewport minus header/footer */
+        min-height: 80vh; /* Stretch vertically, adjust as needed */
+        overflow: auto; /* Keep scrolling for large graphs */
+        position: relative; /* For zoom controls */
+        margin-left: 20px; /* Move left */
+        margin-right: 140px;
+        user-select: none; /* Prevent text selection */
+      }
+      svg {
+        display: block;    /* Remove inline spacing */
+        transform-origin: 0 0; /* Set the origin for scaling */
+      }
+      svg g.node:hover {
+        cursor: pointer;
+      }
+      svg g.cluster text:hover {
+        cursor: pointer;
+      }
+      /* Zoom Controls */
+      .zoom-controls {
+        position: absolute;
+        right: 10px;
+        top: 80px;
+        display: flex;
+        flex-direction: column;
+      }
+
+    </style>
+
+    
+    <!-- Custom styles for this template -->
+    <link href="/static/css/header.css" rel="stylesheet">
+  </head>
+  <body>
+    <svg xmlns="http://www.w3.org/2000/svg" class="d-none">
+      <symbol id="check2" viewBox="0 0 16 16">
+        <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+      </symbol>
+      <symbol id="circle-half" viewBox="0 0 16 16">
+        <path d="M8 15A7 7 0 1 0 8 1v14zm0 1A8 8 0 1 1 8 0a8 8 0 0 1 0 16z"/>
+      </symbol>
+      <symbol id="moon-stars-fill" viewBox="0 0 16 16">
+        <path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/>
+        <path d="M10.794 3.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387a1.734 1.734 0 0 0-1.097 1.097l-.387 1.162a.217.217 0 0 1-.412 0l-.387-1.162A1.734 1.734 0 0 0 9.31 6.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387a1.734 1.734 0 0 0 1.097-1.097l.387-1.162zM13.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.156 1.156 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.156 1.156 0 0 0-.732-.732l-.774-.258a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732L13.863.1z"/>
+      </symbol>
+      <symbol id="sun-fill" viewBox="0 0 16 16">
+        <path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>
+      </symbol>
+    </svg>
+
+    <div class="dropdown position-fixed bottom-0 end-0 mb-3 me-3 bd-mode-toggle">
+      <button class="btn btn-bd-primary py-2 dropdown-toggle d-flex align-items-center"
+              id="bd-theme"
+              type="button"
+              aria-expanded="false"
+              data-bs-toggle="dropdown"
+              aria-label="Toggle theme (auto)">
+        <svg class="bi my-1 theme-icon-active" width="1em" height="1em"><use href="#circle-half"></use></svg>
+        <span class="visually-hidden" id="bd-theme-text">Toggle theme</span>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="bd-theme-text">
+        <li>
+          <button type="button" class="dropdown-item d-flex align-items-center" data-bs-theme-value="light" aria-pressed="false">
+            <svg class="bi me-2 opacity-50" width="1em" height="1em"><use href="#sun-fill"></use></svg>
+            Light
+            <svg class="bi ms-auto d-none" width="1em" height="1em"><use href="#check2"></use></svg>
+          </button>
+        </li>
+        <li>
+          <button type="button" class="dropdown-item d-flex align-items-center" data-bs-theme-value="dark" aria-pressed="false">
+            <svg class="bi me-2 opacity-50" width="1em" height="1em"><use href="#moon-stars-fill"></use></svg>
+            Dark
+            <svg class="bi ms-auto d-none" width="1em" height="1em"><use href="#check2"></use></svg>
+          </button>
+        </li>
+        <li>
+          <button type="button" class="dropdown-item d-flex align-items-center active" data-bs-theme-value="auto" aria-pressed="true">
+            <svg class="bi me-2 opacity-50" width="1em" height="1em"><use href="#circle-half"></use></svg>
+            Auto
+            <svg class="bi ms-auto d-none" width="1em" height="1em"><use href="#check2"></use></svg>
+          </button>
+        </li>
+      </ul>
+    </div>
+
+    
+<svg xmlns="http://www.w3.org/2000/svg" class="d-none">
+  <symbol id="github" viewBox="0 0 16 16">
+    <title>GitHub</title>
+    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8"/>
+  </symbol>
+
+  <symbol id="pypi" viewBox="0 0 16 16">
+    <path fill-rule="evenodd" d="M8 5a.5.5 0 0 1 .5.5v3.793l1.146-1.147a.5.5 0 0 1 .708.708l-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 1 1 .708-.708L7.5 9.293V5.5A.5.5 0 0 1 8 5"/>
+    <path d="M3 0h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-1h1v1a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v1H1V2a2 2 0 0 1 2-2"/>
+    <path d="M1 5v-.5a.5.5 0 0 1 1 0V5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1zm0 3v-.5a.5.5 0 0 1 1 0V8h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1z"/>
+  </symbol>
+  <symbol id="homepage" viewBox="0 0 16 16">
+    <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m.5-5v1h1a.5.5 0 0 1 0 1h-1v1a.5.5 0 1 1-1 0v-1h-1a.5.5 0 1 1 0-1h1v-1a.5.5 0 0 1 1 0"/>
+    <path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L8 2.207l6.646 6.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293z"/>
+    <path d="m8 3.293 4.712 4.712A4.5 4.5 0 0 0 8.758 15H3.5A1.5 1.5 0 0 1 2 13.5V9.293z"/>
+  </symbol>
+</svg>
+
+<main>
+  <h1 class="visually-hidden">Headers examples</h1>
+
+  <div class="container-fluid">
+    <header class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom">
+      <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+          <a href="/" class="d-inline-flex link-body-emphasis text-decoration-none align-items-center">
+              <svg class="bi" width="40" height="32" role="img" aria-label="GitHub"><use xlink:href="#github"/></svg>
+              <span class="ms-2">aNETomy</span>
+          </a>
+      </div>
+      <div class="d-flex align-items-center w-50 col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3 ms-5 position-relative">
+        <div class="dropdown w-100">
+            <form class="flex-grow-1 me-2" role="search">
+                <input type="search" class="form-control form-control-dark" id="searchInput" placeholder="Inquiry names..." aria-label="Search" autocomplete="off">
+            </form>
+            <div class="dropdown-menu w-100" id="searchDropdown" style="max-height: 200px; overflow-y: auto;"></div>
+        </div>
+        <button type="button" class="btn btn-outline-primary" id="searchBtn">Search</button>
+      </div>
+      <div class="col-md-3 text-end d-flex align-items-center ps-5">
+          <button type="button" class="btn btn-warning me-2" id="zoom-in">➕</button>
+          <button type="button" class="btn btn-warning" id="zoom-out">➖</button>
+      </div>
+    </header>
+
+    <div class="row">
+      <!-- Updated Left Sidebar -->
+      <div class="col-md-3 col-lg-2 bg-light p-3">
+        <h5>Graph Controls</h5>
+        <div class="mb-3">
+          <label for="maxDepthInput" class="form-label">Max Depth</label>
+          <input type="number" class="form-control" id="maxDepthInput" placeholder="Enter max depth" min="-1" value="0">
+        </div>
+        <div class="mb-3">
+          <label for="exportFormatSelect" class="form-label">Export Format</label>
+          <select class="form-select" id="exportFormatSelect">
+            <option value="png" selected>PNG</option>
+            <option value="svg">SVG</option>
+          </select>
+        </div>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-primary" id="renderBtn">Render</button>
+          <button type="button" class="btn btn-primary" id="exportBtn">Export</button>
+        </div>
+      </div>
+      <!-- Graph -->
+      <div class="col-md-9 col-lg-10 position-relative">
+        <div id="graph-container">
+          {{ svg_data | safe }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <footer class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top">
+      <div class="col-md-4 d-flex align-items-center"></div>
+      <ul class="nav col-md-4 justify-content-end list-unstyled d-flex">
+        <li class="ms-3"><a class="text-body-secondary" href="#"><svg class="bi" width="24" height="24" role="img" aria-label="PyPI"><use xlink:href="#pypi"/></svg></a></li>
+        <li class="ms-3"><a class="text-body-secondary" href="#"><svg class="bi" width="24" height="24" role="img" aria-label="Homepage"><use xlink:href="#homepage"/></svg></a></li>
+      </ul>
+    </footer>
+  </div>
+</main>
+
+<script>
+  const graphContainer = document.getElementById('graph-container');
+  const zoomInBtn = document.getElementById('zoom-in');
+  const zoomOutBtn = document.getElementById('zoom-out');
+  const searchInput = document.getElementById('searchInput');
+  const searchDropdown = document.getElementById('searchDropdown');
+  const searchBtn = document.getElementById('searchBtn');
+  let scale = 1.0;
+  const scaleStep = 0.2;
+
+  // Fixed: Scroll #graph-container to center element, handle flipped y-axis
+  function centerElement(type, id) {
+      console.log(`Centering ${type} with id: ${id}`);
+      const svg = graphContainer.querySelector('svg');
+      if (!svg) {
+          console.error('No SVG found in #graph-container');
+          return;
+      }
+
+      // Log SVG size and viewBox
+      const svgWidth = parseFloat(svg.getAttribute('width')) || 0;
+      const svgHeight = parseFloat(svg.getAttribute('height')) || 0;
+      const viewBox = svg.getAttribute('viewBox') || 'none';
+      console.log(`SVG size: width=${svgWidth}, height=${svgHeight}, viewBox=${viewBox}`);
+
+      // Log SVG transformations
+      const graphGroup = svg.querySelector('g#graph0');
+      const transform = graphGroup ? graphGroup.getAttribute('transform') : 'none';
+      console.log(`Graph transform: ${transform}`);
+
+      // Find element by <title>
+      let element;
+      if (type === 'node') {
+          element = Array.from(svg.querySelectorAll('g.node')).find(el => {
+              const title = el.querySelector('title');
+              return title && title.textContent === id;
+          });
+      } else {
+          element = Array.from(svg.querySelectorAll('g.cluster')).find(el => {
+              const title = el.querySelector('title');
+              return title && title.textContent === "cluster_" + id;
+          });
+      }
+
+      if (!element) {
+          console.error(`Element not found: ${type} with id ${id}`);
+          return;
+      }
+      console.log(`Element found:`, element);
+
+      const containerRect = graphContainer.getBoundingClientRect();
+      console.log(`Container rect: width=${containerRect.width}, height=${containerRect.height}, scrollWidth=${graphContainer.scrollWidth}, scrollHeight=${graphContainer.scrollHeight}`);
+
+      try {
+          // Get SVG's bounding box to understand coordinate system
+          const svgBBox = svg.getBBox();
+          console.log(`SVG bbox: x=${svgBBox.x}, y=${svgBBox.y}, width=${svgBBox.width}, height=${svgBBox.height}`);
+
+          const bbox = element.getBBox();
+          console.log(`${type} bbox: x=${bbox.x}, y=${bbox.y}, width=${bbox.width}, height=${bbox.height}`);
+
+          let targetX, targetY;
+          if (type === 'node') {
+              targetX = bbox.x + bbox.width / 2;
+              // Flip y-axis: map negative bbox.y to positive targetY, offset by svgBBox.y
+              targetY = (bbox.y + svgBBox.height) * 1.35 + (200 + bbox.height / 2) / scale;
+          } else {
+              const titleText = element.querySelector('text');
+              if (titleText) {
+                  const textBbox = titleText.getBBox();
+                  console.log(`Title text bbox: x=${textBbox.x}, y=${textBbox.y}, width=${textBbox.width}, height=${textBbox.height}`);
+                  targetX = textBbox.x + textBbox.width / 2;
+                  targetY = (textBbox.y + svgBBox.height) * 1.35 + (200 + textBbox.height / 2) / scale;
+              } else {
+                  console.warn('No title text found, using subgraph center');
+                  targetX = bbox.x + bbox.width / 2;
+                  targetY = (bbox.y + svgBBox.height) * 1.35 + (200 + bbox.height / 2) / scale;
+              }
+          }
+
+          // Log adjusted coordinates
+          console.log(`Adjusted coordinates: targetX=${targetX}, targetY=${targetY}`);
+
+          // Validate coordinates
+          if (isNaN(targetX) || isNaN(targetY)) {
+              console.error(`Invalid target coordinates: x=${targetX}, y=${targetY}`);
+              return;
+          }
+          if (targetX < 0 || targetY < 0) {
+              console.warn(`Negative target coordinates: x=${targetX}, y=${targetY}`);
+          }
+
+          // Calculate scroll position
+          const scrollX = (targetX * scale) - (containerRect.width / 2);
+          const scrollY = (targetY * scale) - (containerRect.height / 2);
+          console.log(`Calculated scroll: scrollX=${scrollX}, scrollY=${scrollY}, scale=${scale}`);
+
+          // Apply scroll with bounds checking
+          const maxScrollX = Math.max(0, graphContainer.scrollWidth - containerRect.width);
+          const maxScrollY = Math.max(0, graphContainer.scrollHeight - containerRect.height);
+          graphContainer.scrollLeft = Math.max(0, Math.min(scrollX, maxScrollX));
+          graphContainer.scrollTop = Math.max(0, Math.min(scrollY, maxScrollY));
+          console.log(`Applied scroll: scrollLeft=${graphContainer.scrollLeft}, scrollTop=${graphContainer.scrollTop}, maxScrollX=${maxScrollX}, maxScrollY=${maxScrollY}`);
+      } catch (error) {
+          console.error('Error calculating bbox or scroll:', error);
+      }
+  }
+
+  // Center graph view without toggling expand/collapse
+  function centerGraph(type, id, displayName) {
+      console.log(`centerGraph: ${type}, ${id}, ${displayName}`);
+      fetch('/center', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: type, id: id })
+      })
+      .then(response => {
+          console.log('center response status:', response.status);
+          return response.json();
+      })
+      .then(data => {
+          if (data.svg_data) {
+              console.log('Received svg_data, length:', data.svg_data.length);
+              graphContainer.innerHTML = data.svg_data;
+              setupClickListeners();
+              updateZoom();
+              centerElement(type, id);
+              searchInput.value = displayName || id;
+          } else {
+              console.error('No svg_data in response:', data);
+          }
+          console.log(data.message || data.error);
+      })
+      .catch(error => console.error('Error in centerGraph:', error));
+  }
+
+  // refreshElement for expand/collapse
+  function refreshElement(type, id) {
+      fetch('/refresh', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: type, id: id })
+      })
+      .then(response => response.json())
+      .then(data => {
+          if (data.svg_data) {
+              graphContainer.innerHTML = data.svg_data;
+              setupClickListeners();
+              updateZoom();
+          }
+          console.log(data.message || data.error);
+      })
+      .catch(error => console.error('Error:', error));
+  }
+
+  document.getElementById('renderBtn').addEventListener('click', () => {
+    const maxDepth = parseInt(document.getElementById('maxDepthInput').value);
+    if (maxDepth >= -1) {
+      fetch('/set_depth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ max_depth: maxDepth })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.svg_data) {
+          graphContainer.innerHTML = data.svg_data;
+          setupClickListeners();
+          updateZoom();
+        }
+        console.log(data.message || data.error);
+      })
+      .catch(error => console.error('Error:', error));
+    } else {
+      console.log('Please enter a valid max depth (-1 or greater)');
+    }
+  });
+
+  document.getElementById('exportBtn').addEventListener('click', (event) => {
+    const button = event.target;
+    const format = document.getElementById('exportFormatSelect').value;
+    button.textContent = 'Exported';
+    button.classList.remove('btn-primary');
+    button.classList.add('btn-success');
+    fetch('/export', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ format: format })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.svg_data) {
+        graphContainer.innerHTML = data.svg_data;
+        setupClickListeners();
+        updateZoom();
+      }
+      console.log(data.message || data.error);
+    })
+    .catch(error => console.error('Error:', error));
+  });
+
+  document.getElementById('exportBtn').addEventListener('mouseleave', (event) => {
+    const button = event.target;
+    button.textContent = 'Export';
+    button.classList.remove('btn-success');
+    button.classList.add('btn-primary');
+  });
+
+  // Search input handler
+  searchInput.addEventListener('input', async () => {
+      const query = searchInput.value.trim();
+      if (query.length === 0) {
+          searchDropdown.innerHTML = '';
+          searchDropdown.classList.remove('show');
+          return;
+      }
+
+      try {
+          const response = await fetch('/search', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ query })
+          });
+          const data = await response.json();
+          searchDropdown.innerHTML = '';
+
+          if (data.results && data.results.length > 0) {
+              data.results.forEach(result => {
+                  const item = document.createElement('a');
+                  item.className = 'dropdown-item';
+                  item.href = '#';
+                  item.textContent = result.display_name;
+                  item.dataset.type = result.type;
+                  item.dataset.id = result.id;
+                  item.addEventListener('click', (e) => {
+                      e.preventDefault();
+                      centerGraph(result.type, result.id, result.display_name);
+                      searchDropdown.innerHTML = '';
+                      searchDropdown.classList.remove('show');
+                  });
+                  searchDropdown.appendChild(item);
+              });
+              searchDropdown.classList.add('show');
+          } else {
+              searchDropdown.innerHTML = '<a class="dropdown-item disabled">No results found</a>';
+              searchDropdown.classList.add('show');
+          }
+      } catch (error) {
+          console.error('Search error:', error);
+          searchDropdown.innerHTML = '<a class="dropdown-item disabled">Error fetching results</a>';
+          searchDropdown.classList.add('show');
+      }
+  });
+
+  // Hide dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+      if (!searchInput.contains(e.target) && !searchDropdown.contains(e.target)) {
+          searchDropdown.innerHTML = '';
+          searchDropdown.classList.remove('show');
+      }
+  });
+
+  // Search button handler
+  searchBtn.addEventListener('click', async () => {
+      const query = searchInput.value.trim();
+      if (query.length === 0) return;
+
+      try {
+          const response = await fetch('/search', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ query })
+          });
+          const data = await response.json();
+
+          if (data.results && data.results.length > 0) {
+              const firstResult = data.results[0];
+              centerGraph(firstResult.type, firstResult.id, firstResult.display_name);
+              searchDropdown.innerHTML = '';
+              searchDropdown.classList.remove('show');
+          } else {
+              console.log('No results found for query:', query);
+          }
+      } catch (error) {
+          console.error('Search error:', error);
+      }
+  });
+
+  function updateZoom() {
+      const svg = graphContainer.querySelector('svg');
+      if (svg) {
+          svg.style.transform = `scale(${scale})`;
+          svg.style.transformOrigin = '0 0';
+          console.log(`Zoom updated: scale=${scale}`);
+      }
+  }
+
+  zoomInBtn.addEventListener('click', () => {
+      scale = Math.min(2.0, scale + scaleStep);
+      updateZoom();
+  });
+
+  zoomOutBtn.addEventListener('click', () => {
+      scale = Math.max(0.2, scale - scaleStep);
+      updateZoom();
+  });
+
+  function setupClickListeners() {
+      const nodes = graphContainer.querySelectorAll('svg g.node');
+      nodes.forEach(node => {
+          node.addEventListener('click', () => {
+              const nodeId = node.querySelector('title').textContent;
+              refreshElement('node', nodeId);
+          });
+      });
+      const subgraphs = graphContainer.querySelectorAll('svg g.cluster');
+      subgraphs.forEach(subgraph => {
+          subgraph.addEventListener('click', (event) => {
+              if (!event.target.closest('g.node')) {
+                  const subgraphId = subgraph.querySelector('title').textContent;
+                  refreshElement('subgraph', subgraphId);
+              }
+          });
+      });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+      setupClickListeners();
+      updateZoom();
+  });
+</script>
+
+<script src="/static/js/bootstrap.bundle.min.js"></script>
+
+    </body>
+</html>

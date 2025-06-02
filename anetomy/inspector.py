@@ -1,10 +1,11 @@
 import torch
+from copy import deepcopy
 from functools import wraps as fnwraps
 from typing import Iterable, Mapping
 from torch import nn
 import torch.nn.functional as F
 from .func_manager import FuncManager, FunctionModule
-from .network_archs import NetNode, Drawer
+from .network_archs import NetNode, NetVue
 
 
 
@@ -23,11 +24,11 @@ def ver2num(version, vbits=2):
 PT_VER = ver2num(torch.__version__)
 
 class Inspector():
-    def __init__(self, in_msg=(), out_msg=(), graph_path='./anetomy_inspector.png'):
+    def __init__(self, in_msg=(), out_msg=(), graph_path='./anetomy.png'):
         if graph_path.endswith('.png'):
-            save_type = 'png'
+            export_format = 'png'
         elif graph_path.endswith('.svg'):
-            save_type = 'svg'
+            export_format = 'svg'
         else:
             raise NameError('NEBULAE ERROR ៙ graph path must be a png file or svg file.')
         if isinstance(in_msg, tuple):
@@ -43,7 +44,7 @@ class Inspector():
         self.ops = []
         self.op_sn = {}
         self.fn_mng = FuncManager()
-        self.drawer = Drawer(graph_path, save_type, in_msg, out_msg)
+        self.viewer = NetVue(graph_path, export_format, in_msg, out_msg)
 
         def hook_func_old(func):
             @fnwraps(func)
@@ -89,7 +90,11 @@ class Inspector():
                 net.register_forward_pre_hook(self._before_forward)
                 net.register_forward_hook(self._after_forward)
             
+    def _change_format(self, export_format):
+        self.viewer.export_format = export_format
+    
     def dissect(self, net, *dummy_args, **dummy_kwargs):
+        self.main_body = net
         self.fn_mng.decorate_funcs(self._hook_func)
         net.apply(self._hook)
         net(*dummy_args, **dummy_kwargs)
@@ -101,21 +106,28 @@ class Inspector():
         for op in self.ops:
             if op.type in ('bim', 'leaf') and op.depth == 0:
                 op.type = 'rot'
-        self.entrance = [t for t in self.tensors if t.is_root() and (not t.is_invalid_pendant())]
+        self.viewer.entrance = [t for t in self.tensors if t.is_root() and (not t.is_invalid_pendant())]
+        self.viewer.dry_draw()
 
-    def draw(self, max_depth=-1, to_expand=()):
-        self.drawer.draw(self.entrance, max_depth, to_expand)
+    def render(self, max_depth=0, to_expand=(), to_collapse=()):
+        self.viewer.draw(max_depth, to_expand, to_collapse)
+        self.viewer.export()
+
+    def run(self, host='127.0.0.1', port=7880):
+        self.viewer.run(host, port)
 
     def _check_in_place(self, out_name, in_names):
         for name in in_names:
             op, stage = name.split('@')
-            if stage.startswith('input') and op == out_name.split('@')[0]:
+            if stage.startswith('input') and op == out_name.split('@')[0] or op.startswith('__setitem__'):
                 return True
         return False
     
     def _arr2str(self, arr):
         s = []
-        if isinstance(arr, Iterable):
+        if isinstance(arr, str):
+            s = arr
+        elif isinstance(arr, Iterable):
             for a in arr:
                 s.append('%d'%a)
             s = ', '.join(s)
@@ -175,7 +187,7 @@ class Inspector():
                             u = v.clone()
                             self.to_be_cloned.append((t, k, u, name))
                             self.to_be_linked.append((t, self.curr_net))
-                            self.net_depth = k
+                            self.net_depth = max(self.net_depth, k)
                             return u
                         elif self.curr_stage == 'out':
                             if self._check_in_place(name, t.shared_names):
@@ -185,7 +197,7 @@ class Inspector():
                             u = v.clone()
                             self.to_be_cloned.append((t, k-1, u, name))
                             self.to_be_linked.append((self.curr_net, t))
-                            t.depth = min(t.depth, k-1)
+                            t.depth = min(t.depth, max(0, k-1))
                             t.name = name
                             t.label = label
                             return u
@@ -290,15 +302,16 @@ class Inspector():
                 tensor_buffer.append(t)
         if is_visible:
             for t in tensor_buffer:
-                t.last_op = t.last_op_buffer
-                t.nest_sep = t.nest_sep_buffer
+                t.last_op = deepcopy(t.last_op_buffer)
+                t.nest_sep = deepcopy(t.nest_sep_buffer)
             for i in range(len(self.to_be_cloned)):
                 cloned = self.to_be_cloned[i]
                 linked = self.to_be_linked[i]
                 if isinstance(cloned, NetNode): # impossible to be hidden
+                    # cloned.depth = self.net_depth
                     self.tensors.append(cloned)
                     cloned.add_child(linked)
-                    cloned.inner_mark(self.curr_net, 0)
+                    cloned.inner_mark(self.curr_net, self.net_depth)
                 else:
                     t, k, u, n = cloned
                     if n not in t.shared_names:
@@ -323,7 +336,8 @@ class Inspector():
         nnode = net.__dict__.get('_net_node', None)
         if nnode is None:
             return outs
-        self.ops.append(nnode)
+        if net is not self.main_body:
+            self.ops.append(nnode)
         self.curr_net = nnode
         self.net_depth = nnode.depth
         _, _outs, _ = self._collect_tensors(outs, nnode.name, nnode.label)
@@ -409,15 +423,16 @@ class Inspector():
                 tensor_buffer.append(t)
         if is_visible:
             for t in tensor_buffer:
-                t.last_op = t.last_op_buffer
-                t.nest_sep = t.nest_sep_buffer
+                t.last_op = deepcopy(t.last_op_buffer)
+                t.nest_sep = deepcopy(t.nest_sep_buffer)
             for i in range(len(self.to_be_cloned)):
                 cloned = self.to_be_cloned[i]
                 linked = self.to_be_linked[i]
                 if isinstance(cloned, NetNode): # impossible to be hidden
+                    # cloned.depth = self.net_depth
                     self.tensors.append(cloned)
                     cloned.add_child(linked)
-                    cloned.inner_mark(self.curr_net, 0)
+                    cloned.inner_mark(self.curr_net, self.net_depth)
                 else:
                     t, k, u, n = cloned
                     if n not in t.shared_names:
@@ -442,7 +457,8 @@ class Inspector():
         nnode = net.__dict__.get('_net_node', None)
         if nnode is None:
             return outs
-        self.ops.append(nnode)
+        if net is not self.main_body:
+            self.ops.append(nnode)
         self.curr_net = nnode
         self.net_depth = nnode.depth
         _, _outs, _ = self._collect_tensors(outs, nnode.name, nnode.label)
