@@ -9,7 +9,7 @@ import __future__
 prohibited_funcs = (torch.Tensor.__weakref__, torch.Tensor.__repr__, torch.Tensor.__format__, torch.Tensor.__getitem__, \
                     torch.Tensor.__gt__, torch.Tensor.__lt__, torch.Tensor.__ge__, torch.Tensor.__le__, \
                     torch.Tensor.__eq__, torch.Tensor.__ne__, torch.Tensor.tolist, torch.Tensor.item, \
-                    torch.Tensor.unbind, torch.Tensor.has_names, torch.Tensor.clone, torch.Tensor.__setitem__, \
+                    torch.Tensor.unbind, torch.Tensor.has_names, torch.Tensor.clone, #torch.Tensor.__setitem__, \
                     torch.Tensor.size, torch.Tensor.shape, torch.Tensor.dim)
 exempted_funcs = ()
 

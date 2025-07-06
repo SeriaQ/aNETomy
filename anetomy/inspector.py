@@ -113,13 +113,15 @@ class Inspector():
         self.viewer.draw(max_depth, to_expand, to_collapse)
         self.viewer.export()
 
-    def run(self, host='127.0.0.1', port=7880):
-        self.viewer.run(host, port)
+    def launch(self, host='127.0.0.1', port=7880):
+        self.viewer.launch(host, port)
 
     def _check_in_place(self, out_name, in_names):
+        # >| check if this is an in-place operator
+        # >| Tensor.__setitem__ is a special case without returning values
         for name in in_names:
             op, stage = name.split('@')
-            if stage.startswith('input') and op == out_name.split('@')[0] or op.startswith('__setitem__'):
+            if (stage.startswith('input') and op == out_name.split('@')[0]) or op.startswith('__setitem__'):
                 return True
         return False
     
@@ -161,40 +163,71 @@ class Inspector():
         # >| duplicate those penetrating from root node
         # >| push them into an input or output list indexed by their depth
         is_in_place = False
+        to_modify = None
+        # look for any input tensor recorded before
         for t in self.tensors:
             for k, val in t.inputs_by_depth.items():
                 for i, v in enumerate(val):
                     if tensor is v:
                         u = v.clone()
-                        if self.curr_stage == 'in':
-                            self.to_be_cloned.append((t, k+1, u, name))
-                            self.to_be_linked.append((t, self.curr_net))
-                            self.net_depth = max(self.net_depth, k+1)
-                            return u
-                        elif self.curr_stage == 'out': # only happens on in-place op
-                            assert self._check_in_place(name, t.shared_names)
-                            t.inputs_by_depth[k][i] = v.clone()
-                            is_in_place = True
-                            break
+                        # for a tensor that has been modified internally, to obtain the latest tensor value 
+                        if hasattr(t, 'latest'):
+                            t_latest, k_latest = t.latest
+                            # same as traversing outputs_by_depth
+                            if self.curr_stage == 'in':
+                                self.to_be_cloned.append((t_latest, k_latest, u, name))
+                                self.to_be_linked.append((t_latest, self.curr_net))
+                                self.net_depth = max(self.net_depth, k_latest)
+                                return u
+                            elif self.curr_stage == 'out':
+                                if name.startswith('__setitem__'):
+                                    to_modify = t
+                                    t_latest.inputs_by_depth[k_latest][0] = u
+                                    is_in_place = True
+                                    break
+                                self.to_be_cloned.append((t_latest, k_latest-1, u, name))
+                                self.to_be_linked.append((self.curr_net, t_latest))
+                                t_latest.depth = min(t_latest.depth, max(0, k_latest-1))
+                                t_latest.name = name
+                                t_latest.label = label
+                                return u
+                            else:
+                                raise KeyError('ANETOMY ERROR ៙ curr_stage must be either "in" or "out".')
+                        # for a normal tensor
                         else:
-                            raise KeyError('NEBULAE ERROR ៙ curr_stage must be either "in" or "out".')
+                            if self.curr_stage == 'in':
+                                self.to_be_cloned.append((t, k+1, u, name))
+                                self.to_be_linked.append((t, self.curr_net))
+                                self.net_depth = max(self.net_depth, k+1)
+                                return u
+                            elif self.curr_stage == 'out': # only happens on in-place op
+                                assert self._check_in_place(name, t.shared_names)
+                                if name.startswith('__setitem__'):
+                                    to_modify = t
+                                # duplicate to make input and output alloted with different IDs
+                                # tensor = u
+                                t.inputs_by_depth[k][i] = u
+                                is_in_place = True
+                                break
+                            else:
+                                raise KeyError('ANETOMY ERROR ៙ curr_stage must be either "in" or "out".')
                 if is_in_place:
                     break
+            # look for any output tensor recorded before
             for k, val in t.outputs_by_depth.items():
                 for i, v in enumerate(val):
                     if tensor is v:
+                        u = v.clone()
                         if self.curr_stage == 'in':
-                            u = v.clone()
                             self.to_be_cloned.append((t, k, u, name))
                             self.to_be_linked.append((t, self.curr_net))
                             self.net_depth = max(self.net_depth, k)
                             return u
                         elif self.curr_stage == 'out':
                             if self._check_in_place(name, t.shared_names):
-                                t.outputs_by_depth[k][i] = v.clone()
+                                t.outputs_by_depth[k][i] = u
                                 is_in_place = True
                                 break
-                            u = v.clone()
                             self.to_be_cloned.append((t, k-1, u, name))
                             self.to_be_linked.append((self.curr_net, t))
                             t.depth = min(t.depth, max(0, k-1))
@@ -202,7 +235,7 @@ class Inspector():
                             t.label = label
                             return u
                         else:
-                            raise KeyError('NEBULAE ERROR ៙ curr_stage must be either "in" or "out".')
+                            raise KeyError('ANETOMY ERROR ៙ curr_stage must be either "in" or "out".')
                 if is_in_place:
                     break
             if is_in_place:
@@ -214,6 +247,8 @@ class Inspector():
         elif self.curr_stage == 'out':
             self.to_be_cloned.append(NetNode(name, label, '#CC66FF', self.net_depth, tensor, self.curr_stage))
             self.to_be_linked.append(self.curr_net) # parent
+            if to_modify is not None: # hence the latest value must be stored in an output tensor
+                to_modify.latest = (self.to_be_cloned[-1], self.net_depth)
         return tensor
 
     def _collect_tensors(self, tensors, name, label, idx=0):
@@ -340,6 +375,8 @@ class Inspector():
             self.ops.append(nnode)
         self.curr_net = nnode
         self.net_depth = nnode.depth
+        if nnode.name.startswith('__setitem__'):
+            outs = in_args[0]
         _, _outs, _ = self._collect_tensors(outs, nnode.name, nnode.label)
         for i in range(len(self.to_be_cloned)):
             cloned = self.to_be_cloned[i]
@@ -406,8 +443,6 @@ class Inspector():
         _, _in_kwargs, l = self._collect_tensors(in_kwargs, name, label, m)
         self.curr_net.depth = self.net_depth # input correct depth
         # hide it if this is a submodule of a built-in module
-        # if name.startswith('rand'):
-        #     import pdb;pdb.set_trace()
         is_visible = True
         tensor_buffer = []
         for i in range(len(self.to_be_cloned)):
@@ -461,6 +496,8 @@ class Inspector():
             self.ops.append(nnode)
         self.curr_net = nnode
         self.net_depth = nnode.depth
+        if nnode.name.startswith('__setitem__'):
+            outs = in_args[0]
         _, _outs, _ = self._collect_tensors(outs, nnode.name, nnode.label)
         for i in range(len(self.to_be_cloned)):
             cloned = self.to_be_cloned[i]

@@ -199,7 +199,7 @@ class NetVue():
             except Exception as e:
                 return jsonify({'error': f'SVG generation failed: {str(e)}'}), 500
 
-    def run(self, host='127.0.0.1', port=7880):
+    def launch(self, host='127.0.0.1', port=7880):
         self.app.run(debug=False, port=port, host=host)
     
     def draw(self, max_depth=0, to_expand=(), to_collapse=(), in_data=None):
@@ -312,7 +312,7 @@ class NetVue():
         if stack_in:
             self.node_stack.append([])
         for c in root.next:
-            # print(root.shared_names, '==>', c.shared_names, '||', c.scope)
+            # print(root.shared_names, '==>', c.shared_names,)#'||', c.scope)
             # deal with child according to its type    
             if c.type == 'out':
                 if c.is_leaf():
@@ -405,6 +405,11 @@ class NetVue():
             self.seen.append(ent.name)
             ent.scope = ['']
             self._dry_expand(ent)
+        # if len(self.scope_stack) > 1:
+        #     print('ANETOMY WARNING ◘ subgraph links have something abnormal.')
+        #     while len(self.scope_stack) > 1:
+        #         self.scope_links.append([self.scope_stack[-2], self.scope_stack[-1]])
+        #         del self.scope_stack[-1]
 
     def _dry_expand(self, root):
         if root.name in self.expanded:
@@ -434,8 +439,9 @@ class NetVue():
                 assert root.type in ('in', 'out')
                 if c.name not in self.seen:
                     c.scope = deepcopy(self.scope_stack)
-                    self.scope_stack.append(c.name)
                     self.seen.append(c.name) # only record but not to expand cuz the input will penetrate in
+                if c.name not in self.scope_stack:
+                    self.scope_stack.append(c.name)
             elif c.type in ('bim', 'leaf'):
                 assert root.type in ('in', 'out')
                 if c.name not in self.seen:

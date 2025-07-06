@@ -25,6 +25,12 @@
 Given that PyTorch is an imperative framework, to visualize on the fly could be very useful for developers. aNETomy sidesteps the prep and conversion while keeping the accessibility and compatibility.
 
 <p align="center">
+  <img src="https://ooo.0x0.ooo/2025/07/06/OYT1UX.png" alt="graph.png" width = "815" height = "419" />
+</p>
+
+The fully expanded graph looks like below.
+
+<p align="center">
   <img src="https://ooo.0x0.ooo/2025/03/26/OSYjrC.png" alt="graph.png" width = "280" height = "1288" />
 </p>
 
@@ -87,7 +93,10 @@ dummy_x = torch.randn(1, 3, 28, 28)
 dummy_s = 2
 ant = Inspector(graph_path='./toynn.png')
 ant.dissect(net, dummy_x, scale=dummy_s)
-ant.draw(3)
+# use render() to save network image directly
+ant.render(3) # 3 is the max depth to expand
+# use launch() to run a web server for inspection
+ant.run('127.0.0.1', port=7880)
 ```
 
 
