@@ -50,7 +50,7 @@ class Inspector():
             @fnwraps(func)
             def wrapper(*args, **kwargs):
                 fm = FunctionModule(func.__name__)
-                if isinstance(args[0], (tuple, list)): # binary operators
+                if len(args) > 0 and isinstance(args[0], (tuple, list)): # binary operators
                     flatten_input = tuple(args[0])+args[1:]+tuple(kwargs.values())
                 else:
                     flatten_input = args+tuple(kwargs.values())
@@ -314,7 +314,13 @@ class Inspector():
             self.curr_net.type = 'bim'
             if isinstance(net, FunctionModule):
                 if net.__name__ in ('cat', 'stack'):
-                    self.curr_net.attrs = ['Axis: %d'%(in_args[2])]
+                    if len(in_args) > 2:
+                        axes = in_args[2] if isinstance(in_args[2], Iterable) else [in_args[2]]
+                        axes = [str(a) for a in axes]
+                        axes = ', '.join(axes)
+                    else:
+                        axes = 'default(0)'
+                    self.curr_net.attrs = ['Axis: %s'%axes]
             else:
                 self._record_builtin_attr(net)
             if not hasattr(self.curr_net, 'attrs'):
@@ -432,9 +438,16 @@ class Inspector():
             if isinstance(net, FunctionModule):
                 if net.__name__ in ('cat', 'stack'):
                     if len(in_args) > 1:
-                        self.curr_net.attrs = ['Axis: %d'%(in_args[1])]
+                        axes = in_args[1] if isinstance(in_args[1], Iterable) else [in_args[1]]
+                        axes = [str(a) for a in axes]
+                        axes = ', '.join(axes)
+                    elif 'dim' in in_kwargs.keys():
+                        axes = in_kwargs['dim'] if isinstance(in_kwargs['dim'], Iterable) else [in_kwargs['dim']]
+                        axes = [str(a) for a in axes]
+                        axes = ', '.join(axes)
                     else:
-                        self.curr_net.attrs = ['Axis: %d'%(in_kwargs['dim'])]
+                        axes = 'default(0)'
+                    self.curr_net.attrs = ['Axis: %s'%axes]
             else:
                 self._record_builtin_attr(net)
             if not hasattr(self.curr_net, 'attrs'):

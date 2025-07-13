@@ -96,7 +96,7 @@ ant.dissect(net, dummy_x, scale=dummy_s)
 # use render() to save network image directly
 ant.render(3) # 3 is the max depth to expand
 # use launch() to run a web server for inspection
-ant.run('127.0.0.1', port=7880)
+ant.launch('127.0.0.1', port=7880)
 ```
 
 

@@ -141,7 +141,7 @@ class NetVue():
                 # Render graph in requested format
                 self.export()
                 svg_data = self.graph.pipe(format='svg').decode('utf-8')
-                return jsonify({'message': f'Export to {self.graph_path + '.' + self.export_format}', 'svg_data': svg_data})
+                return jsonify({'message': f"Export to {self.graph_path + '.' + self.export_format}", 'svg_data': svg_data})
             except Exception as e:
                 return jsonify({'error': str(e)}), 400
 
